@@ -111,6 +111,14 @@ td.pct-neu { color: var(--stodugur); font-weight: 500; }
 .count-info { font-size: 12px; color: var(--text-faint); padding: 10px 14px; }
 .no-results { text-align: center; padding: 2rem; color: var(--text-faint); font-size: 13px; }
 
+td.fh-val { font-weight: 500; color: var(--accent); }
+td.fhp-high { color: var(--vaxandi); font-weight: 600; }
+td.fhp-mid  { color: var(--stodugur); font-weight: 500; }
+td.fhp-low  { color: var(--minnkandi-mid); font-weight: 600; }
+thead th.fh-col { border-left: 2px solid var(--border-strong); }
+td.fh-col { border-left: 2px solid var(--border); }
+.source-tag { display:inline-block; font-size:10px; background:var(--stodugur-bg); color:var(--stodugur); border-radius:3px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+
 /* Footer */
 .footer { margin-top: 1.5rem; font-size: 12px; color: var(--text-faint); }
 </style>
@@ -120,7 +128,7 @@ td.pct-neu { color: var(--stodugur); font-weight: 500; }
 
 <div class="header">
   <h1>Útskriftartölur grunnskólanemenda – 10. bekkur</h1>
-  <p>Fjöldi nemenda sem útskrifaðist úr 10. bekk (síðasta bekk grunnskóla) eftir skólum, 2015–2020 &nbsp;·&nbsp; Heimild: Hagstofa Íslands (SKO02102)</p>
+  <p>Fjöldi nemenda sem útskrifaðist úr 10. bekk (síðasta bekk grunnskóla) eftir skólum, 2015–2020 &nbsp;·&nbsp; Heimild: Hagstofa Íslands (SKO02102) &nbsp;·&nbsp; Framhaldsskólaútskriftir 2023–24: Þingskjal 1182, tafla 1</p>
 </div>
 
 <div class="summary-bar">
@@ -184,6 +192,8 @@ td.pct-neu { color: var(--stodugur); font-weight: 500; }
         <th>Þróun</th>
         <th onclick="sortBy('a')" id="th-a">Meðaltal</th>
         <th onclick="sortBy('p')" id="th-p">% breyting</th>
+        <th onclick="sortBy('fh')" id="th-fh" class="fh-col" title="Fjöldi nemenda sem útskrifuðust úr framhaldsskóla skólaárið 2023–24 og komu úr þessum grunnskóla (Þingskjal 1182, tafla 1)">Framh. útsk. 2023–24 <span class="source-tag">1182</span></th>
+        <th onclick="sortBy('fhp')" id="th-fhp" class="fh-col" title="Hlutfall framhaldsskólaútskriftanna 2023–24 af 10. bekk árgangi 2020 í sama skóla">% af 2020 árg.</th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -192,7 +202,7 @@ td.pct-neu { color: var(--stodugur); font-weight: 500; }
 </div>
 
 <div class="footer">
-  Þróunarflokkur: vaxandi = yfir +15%, minnkandi = undir −15%, stöðugur = á milli, óljóst = ekki hægt að reikna (byrjunargildi 0 eða of fá gögn). &nbsp;·&nbsp; Útskriftarárgangur = nemendur í 10. bekk viðkomandi námsár.
+  Þróunarflokkur: vaxandi = yfir +15%, minnkandi = undir −15%, stöðugur = á milli, óljóst = ekki hægt að reikna (byrjunargildi 0 eða of fá gögn). &nbsp;·&nbsp; Útskriftarárgangur = nemendur í 10. bekk viðkomandi námsár. &nbsp;·&nbsp; <strong>Framh. útsk. 2023–24</strong>: fjöldi nemenda sem útskrifuðust úr framhaldsskóla skólaárið 2023–24 og komu úr viðkomandi grunnskóla (heimild: skýrsla mennta- og barnamálaráðherra, Þingskjal 1182, 157. löggjafarþing, tafla 1). Hlutfallið er reiknað sem framhaldsskólaútskriftirnar 2023–24 deilt með 10. bekk árgangnum 2020 í sama skóla — þetta er nálgun þar sem útskriftarárgangar fara ekki alltaf saman.
 </div>
 
 </div>
@@ -200,6 +210,60 @@ td.pct-neu { color: var(--stodugur); font-weight: 500; }
 <script>
 const TOTALS = [4340, 4181, 4117, 4277, 4430, 4427];
 const YEARS = ['2015','2016','2017','2018','2019','2020'];
+
+// Framhaldsskólaútskriftir 2023–24 eftir grunnskóla (Þingskjal 1182, tafla 1)
+// Lyklar eru xlsx-nöfn grunnskóla
+const FRAMH_DATA = {
+  "Akurskóli":22,"Alþjóðaskólinn á Íslandi":4,"Austurbæjarskóli":27,
+  "Barnaskólinn á Eyrarbakka og Stokkseyri":6,"Bláskógaskóli Laugarvatni":4,
+  "Grunnskólinn á Blönduósi/Blönduskóli":8,"Borgarhólsskóli":22,
+  "Breiðholtsskóli":18,"Brekkubæjarskóli":17,"Brekkuskóli":37,
+  "Brúarásskóli":4,"Bíldudalsskóli":1,"Dalskóli":11,"Dalvíkurskóli":12,
+  "Djúpavogsskóli":2,"Egilsstaðaskóli":19,"Eskifjarðarskóli":2,
+  "Fellaskóli (Fellabæ)":5,"Fellaskóli (Reykjavík)":8,"Flóaskóli":5,
+  "Flúðaskóli":13,"Foldaskóli":47,"Garðaskóli":142,"Gerðaskóli":6,
+  "Giljaskóli":23,"Glerárskóli":15,"Grenivíkurskóli":2,"Grundaskóli":51,
+  "Grunnskóli Bolungarvíkur":7,"Grunnskóli Borgarfjarðar":9,
+  "Grunnskóli Borgarfjarðar eystri":1,"Grunnskóli Fjallabyggðar":6,
+  "Grunnskóli Grindavíkur":26,"Grunnskóli Grundarfjarðar":7,
+  "Grunnskóli Hornafjarðar":16,"Grunnskóli Húnaþings vestra":7,
+  "Grunnskóli Reyðarfjarðar":10,"Grunnskóli Seltjarnarness":29,
+  "Grunnskóli Snæfellsbæjar":18,"Grunnskóli Vestmannaeyja":31,
+  "Grunnskólinn Hellu":11,"Grunnskólinn austan Vatna":4,
+  "Grunnskólinn Þingeyri":2,"Grunnskólinn á Suðureyri":5,
+  "Grunnskólinn á Ísafirði":26,"Grunnskólinn á Þórshöfn":3,
+  "Grunnskólinn í Borgarnesi":17,"Grunnskólinn í Hveragerði":17,
+  "Sandgerðisskóli":6,"Grunnskólinn í Stykkishólmi":8,
+  "Grunnskólinn í Þorlákshöfn":23,"Hafralækjarskóli":7,
+  "Hagaskóli":148,"Heiðarskóli (Hvalfjarðarsveit)":4,
+  "Heiðarskóli (Reykjanesbæ)":31,"Hlíðaskóli":35,"Holtaskóli":19,
+  "Hrafnagilsskóli":11,"Hraunvallaskóli":60,"Hríseyjarskóli":1,
+  "Hvaleyrarskóli":24,"Hvolsskóli":9,"Háaleitisskóli (Reykjanesbæ)":8,
+  "Háaleitisskóli":10,"Háteigsskóli":32,"Hólabrekkuskóli":26,
+  "Höfðaskóli":3,"Hörðuvallaskóli":59,"Húnavallaskóli":2,
+  "Ingunnarskóli":31,"Kelduskóli":7,"Kerhólsskóli":1,
+  "Kirkjubæjarskóli":2,"Klébergsskóli":8,"Kársnesskóli":39,
+  "Kópavogsskóli":20,"Landakotsskóli":9,"Langholtsskóli":30,
+  "Laugalandsskóli í Holtum":6,"Laugalækjarskóli":51,"Lindaskóli":28,
+  "Lundarskóli":32,"Lágafellsskóli":39,"Lækjarskóli":28,
+  "Myllubakkaskóli":14,"Naustaskóli":22,"Nesskóli":10,
+  "Njarðvíkurskóli":21,"Norðlingaskóli":34,"NÚ":5,
+  "Oddeyrarskóli":11,"Patreksskóli":4,"Reykhólaskóli":2,
+  "Reykjahlíðarskóli":2,"Rimaskóli":29,"Réttarholtsskóli":105,
+  "Salaskóli":45,"Seljaskóli":32,"Setbergsskóli":19,
+  "Seyðisfjarðarskóli":4,"Sjálandsskóli":16,"Smáraskóli":24,
+  "Snælandsskóli":23,"Stóru-Vogaskóli":7,"Stórutjarnaskóli":1,
+  "Sunnulækjarskóli":41,"Suðurhlíðarskóli":1,"Sæmundarskóli":41,
+  "Síðuskóli":26,"Súðavíkurskóli":1,"Tjarnarskóli":8,
+  "Tálknafjarðarskóli":5,"Vallaskóli":34,"Valsárskóli":1,
+  "Varmahlíðarskóli":5,"Varmárskóli":52,"Vatnsendaskóli":36,
+  "Vogaskóli":16,"Vopnafjarðarskóli":7,"Vættaskóli":12,
+  "Víkurskóli (Reykjavík)":29,"Víkurskóli (Vík í Mýrdal)":2,
+  "Víðistaðaskóli":41,"Waldorfskólinn Lækjarbotnum":5,
+  "Waldorfskólinn Sólstafir":4,"Álfhólsskóli":27,"Álftamýrarskóli":9,
+  "Álftanesskóli":30,"Árbæjarskóli":63,"Árskóli":30,"Áslandsskóli":31,
+  "Ölduselsskóli":23,"Öldutúnsskóli":26,"Þelamerkurskóli":3
+};
 
 const DATA = {"totals":[4340,4181,4117,4277,4430,4427],"schools":[{"n":"Akurskóli","v":[27,30,34,48,46,49],"f":27,"l":49,"a":39.0,"p":81.5,"c":"vaxandi"},{"n":"Alþjóðaskólinn á Íslandi","v":[0,1,4,8,10,13],"f":0,"l":13,"a":6.0,"p":null,"c":"óljós"},{"n":"Arnarskóli","v":[null,null,null,0,null,1],"f":0,"l":1,"a":0.5,"p":null,"c":"óljós"},{"n":"Austurbæjarskóli","v":[37,40,43,40,35,43],"f":37,"l":43,"a":39.7,"p":16.2,"c":"vaxandi"},{"n":"Auðarskóli","v":[13,6,10,8,10,7],"f":13,"l":7,"a":9.0,"p":-46.2,"c":"minnkandi"},{"n":"Barnaskólinn á Eyrarbakka og Stokkseyri","v":[16,12,15,12,13,8],"f":16,"l":8,"a":12.7,"p":-50.0,"c":"minnkandi"},{"n":"Bláskógaskóli Laugarvatni","v":[3,3,4,4,5,6],"f":3,"l":6,"a":4.2,"p":100.0,"c":"vaxandi"},{"n":"Borgarhólsskóli","v":[28,25,28,29,21,26],"f":28,"l":26,"a":26.2,"p":-7.1,"c":"stöðugur"},{"n":"Breiðdals- og Stöðvarfjarðarskóli","v":[null,null,null,3,2,3],"f":3,"l":3,"a":2.7,"p":0.0,"c":"stöðugur"},{"n":"Breiðholtsskóli","v":[35,50,21,14,25,37],"f":35,"l":37,"a":30.3,"p":5.7,"c":"stöðugur"},{"n":"Brekkubæjarskóli","v":[39,49,38,37,47,40],"f":39,"l":40,"a":41.7,"p":2.6,"c":"stöðugur"},{"n":"Brekkuskóli","v":[54,46,38,57,60,53],"f":54,"l":53,"a":51.3,"p":-1.9,"c":"stöðugur"},{"n":"Brúarskóli","v":[5,2,3,5,5,4],"f":5,"l":4,"a":4.0,"p":-20.0,"c":"minnkandi"},{"n":"Brúarásskóli","v":[8,6,2,4,6,3],"f":8,"l":3,"a":4.8,"p":-62.5,"c":"minnkandi"},{"n":"Bíldudalsskóli","v":[null,5,2,3,3,2],"f":5,"l":2,"a":3.0,"p":-60.0,"c":"minnkandi"},{"n":"Dalskóli","v":[null,13,9,17,17,27],"f":13,"l":27,"a":16.6,"p":107.7,"c":"vaxandi"},{"n":"Dalvíkurskóli","v":[31,21,26,27,18,16],"f":31,"l":16,"a":23.2,"p":-48.4,"c":"minnkandi"},{"n":"Djúpavogsskóli","v":[4,3,5,6,2,8],"f":4,"l":8,"a":4.7,"p":100.0,"c":"vaxandi"},{"n":"Egilsstaðaskóli","v":[35,37,25,31,36,25],"f":35,"l":25,"a":31.5,"p":-28.6,"c":"minnkandi"},{"n":"Eskifjarðarskóli","v":[12,13,10,15,16,14],"f":12,"l":14,"a":13.3,"p":16.7,"c":"vaxandi"},{"n":"Fellaskóli (Fellabæ)","v":[8,16,11,11,10,6],"f":8,"l":6,"a":10.3,"p":-25.0,"c":"minnkandi"},{"n":"Fellaskóli (Reykjavík)","v":[26,27,29,25,31,32],"f":26,"l":32,"a":28.3,"p":23.1,"c":"vaxandi"},{"n":"Finnbogastaðaskóli","v":[0,1,0,null,null,null],"f":0,"l":0,"a":0.3,"p":null,"c":"óljós"},{"n":"Flóaskóli","v":[8,9,10,12,8,10],"f":8,"l":10,"a":9.5,"p":25.0,"c":"vaxandi"},{"n":"Flúðaskóli","v":[30,13,14,15,16,18],"f":30,"l":18,"a":17.7,"p":-40.0,"c":"minnkandi"},{"n":"Foldaskóli","v":[78,87,75,82,85,87],"f":78,"l":87,"a":82.3,"p":11.5,"c":"stöðugur"},{"n":"Garðaskóli","v":[152,160,169,178,182,175],"f":152,"l":175,"a":169.3,"p":15.1,"c":"vaxandi"},{"n":"Gerðaskóli","v":[21,21,13,19,17,23],"f":21,"l":23,"a":19.0,"p":9.5,"c":"stöðugur"},{"n":"Giljaskóli","v":[33,38,36,43,36,29],"f":33,"l":29,"a":35.8,"p":-12.1,"c":"stöðugur"},{"n":"Glerárskóli","v":[32,29,32,15,37,29],"f":32,"l":29,"a":29.0,"p":-9.4,"c":"stöðugur"},{"n":"Grenivíkurskóli","v":[8,6,3,2,4,3],"f":8,"l":3,"a":4.3,"p":-62.5,"c":"minnkandi"},{"n":"Grundaskóli","v":[46,59,59,60,56,68],"f":46,"l":68,"a":58.0,"p":47.8,"c":"vaxandi"},{"n":"Grunnskóli Bolungarvíkur","v":[4,10,15,13,14,11],"f":4,"l":11,"a":11.2,"p":175.0,"c":"vaxandi"},{"n":"Grunnskóli Borgarfjarðar","v":[19,14,14,18,16,19],"f":19,"l":19,"a":16.7,"p":0.0,"c":"stöðugur"},{"n":"Grunnskóli Borgarfjarðar eystri","v":[3,0,1,1,0,3],"f":3,"l":3,"a":1.3,"p":0.0,"c":"stöðugur"},{"n":"Grunnskóli Drangsness","v":[1,0,1,0,0,0],"f":1,"l":0,"a":0.3,"p":-100.0,"c":"minnkandi"},{"n":"Grunnskóli Fjallabyggðar","v":[24,26,22,17,18,19],"f":24,"l":19,"a":21.0,"p":-20.8,"c":"minnkandi"},{"n":"Grunnskóli Fáskrúðsfjarðar","v":[14,8,9,8,15,4],"f":14,"l":4,"a":9.7,"p":-71.4,"c":"minnkandi"},{"n":"Grunnskóli Grindavíkur","v":[53,42,47,47,52,46],"f":53,"l":46,"a":47.8,"p":-13.2,"c":"stöðugur"},{"n":"Grunnskóli Grundarfjarðar","v":[16,6,9,12,8,10],"f":16,"l":10,"a":10.2,"p":-37.5,"c":"minnkandi"},{"n":"Grunnskóli Hornafjarðar","v":[40,27,29,20,22,23],"f":40,"l":23,"a":26.8,"p":-42.5,"c":"minnkandi"},{"n":"Grunnskóli Húnaþings vestra","v":[15,7,13,15,30,13],"f":15,"l":13,"a":15.5,"p":-13.3,"c":"stöðugur"},{"n":"Grunnskóli Raufarhafnar","v":[0,0,1,0,1,0],"f":0,"l":0,"a":0.3,"p":null,"c":"óljós"},{"n":"Grunnskóli Reyðarfjarðar","v":[17,11,13,22,19,22],"f":17,"l":22,"a":17.3,"p":29.4,"c":"vaxandi"},{"n":"Grunnskóli Seltjarnarness","v":[53,45,50,56,47,44],"f":53,"l":44,"a":49.2,"p":-17.0,"c":"minnkandi"},{"n":"Grunnskóli Snæfellsbæjar","v":[29,33,23,25,26,30],"f":29,"l":30,"a":27.7,"p":3.4,"c":"stöðugur"},{"n":"Grunnskóli Vestmannaeyja","v":[56,58,50,48,57,39],"f":56,"l":39,"a":51.3,"p":-30.4,"c":"minnkandi"},{"n":"Grunnskóli Önundarfjarðar","v":[0,0,2,0,3,2],"f":0,"l":2,"a":1.2,"p":null,"c":"óljós"},{"n":"Grunnskólinn Hellu","v":[14,12,15,17,16,17],"f":14,"l":17,"a":15.2,"p":21.4,"c":"vaxandi"},{"n":"Grunnskólinn austan Vatna","v":[8,10,5,7,1,10],"f":8,"l":10,"a":6.8,"p":25.0,"c":"vaxandi"},{"n":"Grunnskólinn Þingeyri","v":[4,5,1,2,4,4],"f":4,"l":4,"a":3.3,"p":0.0,"c":"stöðugur"},{"n":"Grunnskólinn á Bakkafirði","v":[3,2,null,null,null,null],"f":3,"l":2,"a":2.5,"p":-33.3,"c":"minnkandi"},{"n":"Grunnskólinn á Blönduósi/Blönduskóli","v":[14,13,10,18,9,13],"f":14,"l":13,"a":12.8,"p":-7.1,"c":"stöðugur"},{"n":"Grunnskólinn á Hólmavík","v":[8,4,5,7,1,3],"f":8,"l":3,"a":4.7,"p":-62.5,"c":"minnkandi"},{"n":"Grunnskólinn á Stöðvarfirði","v":[3,1,1,null,null,null],"f":3,"l":1,"a":1.7,"p":-66.7,"c":"minnkandi"},{"n":"Grunnskólinn á Suðureyri","v":[4,2,4,3,2,6],"f":4,"l":6,"a":3.5,"p":50.0,"c":"vaxandi"},{"n":"Grunnskólinn á Ísafirði","v":[38,35,43,26,30,33],"f":38,"l":33,"a":34.2,"p":-13.2,"c":"stöðugur"},{"n":"Grunnskólinn á Þórshöfn","v":[3,8,2,11,8,8],"f":3,"l":8,"a":6.7,"p":166.7,"c":"vaxandi"},{"n":"Grunnskólinn í Borgarnesi","v":[28,39,19,31,27,22],"f":28,"l":22,"a":27.7,"p":-21.4,"c":"minnkandi"},{"n":"Grunnskólinn í Breiðdalshreppi","v":[0,2,3,null,null,null],"f":0,"l":3,"a":1.7,"p":null,"c":"óljós"},{"n":"Grunnskólinn í Grímsey/Grímseyjarskóli","v":[0,0,0,0,null,null],"f":0,"l":0,"a":0.0,"p":null,"c":"óljós"},{"n":"Grunnskólinn í Hofgarði","v":[0,0,2,2,1,0],"f":0,"l":0,"a":0.8,"p":null,"c":"óljós"},{"n":"Grunnskólinn í Hveragerði","v":[43,33,32,26,36,33],"f":43,"l":33,"a":33.8,"p":-23.3,"c":"minnkandi"},{"n":"Grunnskólinn í Stykkishólmi","v":[16,18,17,18,15,11],"f":16,"l":11,"a":15.8,"p":-31.2,"c":"minnkandi"},{"n":"Grunnskólinn í Þorlákshöfn","v":[19,20,28,18,16,28],"f":19,"l":28,"a":21.5,"p":47.4,"c":"vaxandi"},{"n":"Hagaskóli","v":[167,157,176,186,194,207],"f":167,"l":207,"a":181.2,"p":24.0,"c":"vaxandi"},{"n":"Heiðarskóli (Hvalfjarðarsveit)","v":[6,13,6,13,4,8],"f":6,"l":8,"a":8.3,"p":33.3,"c":"vaxandi"},{"n":"Heiðarskóli (Reykjanesbæ)","v":[50,37,45,33,50,43],"f":50,"l":43,"a":43.0,"p":-14.0,"c":"stöðugur"},{"n":"Hlíðarskóli","v":[1,1,3,2,1,0],"f":1,"l":0,"a":1.3,"p":-100.0,"c":"minnkandi"},{"n":"Hlíðaskóli","v":[54,44,39,43,40,53],"f":54,"l":53,"a":45.5,"p":-1.9,"c":"stöðugur"},{"n":"Holtaskóli","v":[44,51,49,55,37,46],"f":44,"l":46,"a":47.0,"p":4.5,"c":"stöðugur"},{"n":"Hrafnagilsskóli","v":[17,18,13,16,24,11],"f":17,"l":11,"a":16.5,"p":-35.3,"c":"minnkandi"},{"n":"Hraunvallaskóli","v":[69,66,66,68,83,70],"f":69,"l":70,"a":70.3,"p":1.4,"c":"stöðugur"},{"n":"Hríseyjarskóli","v":[1,0,0,1,1,2],"f":1,"l":2,"a":0.8,"p":100.0,"c":"vaxandi"},{"n":"Hvaleyrarskóli","v":[47,35,38,35,50,35],"f":47,"l":35,"a":40.0,"p":-25.5,"c":"minnkandi"},{"n":"Hvolsskóli","v":[33,25,18,26,24,21],"f":33,"l":21,"a":24.5,"p":-36.4,"c":"minnkandi"},{"n":"Háaleitisskóli","v":[48,30,38,40,26,null],"f":48,"l":26,"a":36.4,"p":-45.8,"c":"minnkandi"},{"n":"Háaleitisskóli (Reykjanesbæ)","v":[null,null,null,18,23,19],"f":18,"l":19,"a":20.0,"p":5.6,"c":"stöðugur"},{"n":"Háteigsskóli","v":[45,40,49,39,48,46],"f":45,"l":46,"a":44.5,"p":2.2,"c":"stöðugur"},{"n":"Hólabrekkuskóli","v":[47,35,45,58,45,55],"f":47,"l":55,"a":47.5,"p":17.0,"c":"vaxandi"},{"n":"Höfðaskóli","v":[13,12,9,7,9,9],"f":13,"l":9,"a":9.8,"p":-30.8,"c":"minnkandi"},{"n":"Hörðuvallaskóli","v":[51,54,59,79,84,86],"f":51,"l":86,"a":68.8,"p":68.6,"c":"vaxandi"},{"n":"Húnavallaskóli","v":[7,8,6,5,2,6],"f":7,"l":6,"a":5.7,"p":-14.3,"c":"stöðugur"},{"n":"Ingunnarskóli","v":[49,46,34,41,45,43],"f":49,"l":43,"a":43.0,"p":-12.2,"c":"stöðugur"},{"n":"Kelduskóli","v":[60,39,32,53,37,null],"f":60,"l":37,"a":44.2,"p":-38.3,"c":"minnkandi"},{"n":"Kerhólsskóli","v":[0,5,4,2,4,4],"f":0,"l":4,"a":3.2,"p":null,"c":"óljós"},{"n":"Kirkjubæjarskóli","v":[4,5,5,3,2,3],"f":4,"l":3,"a":3.7,"p":-25.0,"c":"minnkandi"},{"n":"Klettaskóli","v":[15,8,15,14,6,14],"f":15,"l":14,"a":12.0,"p":-6.7,"c":"stöðugur"},{"n":"Klébergsskóli","v":[19,16,13,18,10,18],"f":19,"l":18,"a":15.7,"p":-5.3,"c":"stöðugur"},{"n":"Kársnesskóli","v":[39,64,39,59,56,53],"f":39,"l":53,"a":51.7,"p":35.9,"c":"vaxandi"},{"n":"Kópavogsskóli","v":[35,27,35,28,39,29],"f":35,"l":29,"a":32.2,"p":-17.1,"c":"minnkandi"},{"n":"Landakotsskóli","v":[12,10,18,8,23,27],"f":12,"l":27,"a":16.3,"p":125.0,"c":"vaxandi"},{"n":"Langholtsskóli","v":[63,44,39,49,54,59],"f":63,"l":59,"a":51.3,"p":-6.3,"c":"stöðugur"},{"n":"Laugalandsskóli í Holtum","v":[6,10,3,7,4,7],"f":6,"l":7,"a":6.2,"p":16.7,"c":"vaxandi"},{"n":"Laugalækjarskóli","v":[54,72,66,87,79,84],"f":54,"l":84,"a":73.7,"p":55.6,"c":"vaxandi"},{"n":"Laugargerðisskóli","v":[2,2,3,0,4,1],"f":2,"l":1,"a":2.0,"p":-50.0,"c":"minnkandi"},{"n":"Lindaskóli","v":[58,44,49,70,56,51],"f":58,"l":51,"a":54.7,"p":-12.1,"c":"stöðugur"},{"n":"Lundarskóli","v":[32,48,43,60,41,44],"f":32,"l":44,"a":44.7,"p":37.5,"c":"vaxandi"},{"n":"Lágafellsskóli","v":[81,67,83,69,80,65],"f":81,"l":65,"a":74.2,"p":-19.8,"c":"minnkandi"},{"n":"Lækjarskóli","v":[56,50,49,47,67,46],"f":56,"l":46,"a":52.5,"p":-17.9,"c":"minnkandi"},{"n":"Myllubakkaskóli","v":[31,41,33,35,38,36],"f":31,"l":36,"a":35.7,"p":16.1,"c":"vaxandi"},{"n":"Naustaskóli","v":[32,30,32,43,30,34],"f":32,"l":34,"a":33.5,"p":6.2,"c":"stöðugur"},{"n":"Nesskóli","v":[22,22,20,11,22,16],"f":22,"l":16,"a":18.8,"p":-27.3,"c":"minnkandi"},{"n":"Njarðvíkurskóli","v":[55,45,47,36,39,48],"f":55,"l":48,"a":45.0,"p":-12.7,"c":"stöðugur"},{"n":"Norðlingaskóli","v":[40,40,45,39,47,52],"f":40,"l":52,"a":43.8,"p":30.0,"c":"vaxandi"},{"n":"NÚ","v":[null,12,8,18,22,18],"f":12,"l":18,"a":15.6,"p":50.0,"c":"vaxandi"},{"n":"Oddeyrarskóli","v":[26,16,20,30,20,21],"f":26,"l":21,"a":22.2,"p":-19.2,"c":"minnkandi"},{"n":"Patreksskóli","v":[20,5,14,9,8,8],"f":20,"l":8,"a":10.7,"p":-60.0,"c":"minnkandi"},{"n":"Reykholtsskóli","v":[18,6,4,8,8,4],"f":18,"l":4,"a":8.0,"p":-77.8,"c":"minnkandi"},{"n":"Reykhólaskóli","v":[2,3,7,3,5,4],"f":2,"l":4,"a":4.0,"p":100.0,"c":"vaxandi"},{"n":"Reykjahlíðarskóli","v":[4,5,4,0,4,5],"f":4,"l":5,"a":3.7,"p":25.0,"c":"vaxandi"},{"n":"Reykjavík International School","v":[0,2,null,null,null,null],"f":0,"l":2,"a":1.0,"p":null,"c":"óljós"},{"n":"Rimaskóli","v":[50,72,49,34,47,47],"f":50,"l":47,"a":49.8,"p":-6.0,"c":"stöðugur"},{"n":"Réttarholtsskóli","v":[128,134,140,138,138,129],"f":128,"l":129,"a":134.5,"p":0.8,"c":"stöðugur"},{"n":"Salaskóli","v":[45,55,35,55,67,61],"f":45,"l":61,"a":53.0,"p":35.6,"c":"vaxandi"},{"n":"Sandgerðisskóli","v":[13,27,22,17,28,19],"f":13,"l":19,"a":21.0,"p":46.2,"c":"vaxandi"},{"n":"Seljaskóli","v":[71,57,71,55,64,60],"f":71,"l":60,"a":63.0,"p":-15.5,"c":"minnkandi"},{"n":"Setbergsskóli","v":[45,43,43,36,26,44],"f":45,"l":44,"a":39.5,"p":-2.2,"c":"stöðugur"},{"n":"Seyðisfjarðarskóli","v":[6,2,5,5,7,7],"f":6,"l":7,"a":5.3,"p":16.7,"c":"vaxandi"},{"n":"Sjálandsskóli","v":[25,35,25,20,32,24],"f":25,"l":24,"a":26.8,"p":-4.0,"c":"stöðugur"},{"n":"Smáraskóli","v":[44,42,33,28,49,25],"f":44,"l":25,"a":36.8,"p":-43.2,"c":"minnkandi"},{"n":"Snælandsskóli","v":[31,37,45,40,42,42],"f":31,"l":42,"a":39.5,"p":35.5,"c":"vaxandi"},{"n":"Stóru-Vogaskóli","v":[19,21,14,18,13,18],"f":19,"l":18,"a":17.2,"p":-5.3,"c":"stöðugur"},{"n":"Stórutjarnaskóli","v":[5,4,8,4,2,5],"f":5,"l":5,"a":4.7,"p":0.0,"c":"stöðugur"},{"n":"Sunnulækjarskóli","v":[51,61,57,67,51,87],"f":51,"l":87,"a":62.3,"p":70.6,"c":"vaxandi"},{"n":"Suðurhlíðarskóli","v":[7,4,7,2,4,8],"f":7,"l":8,"a":5.3,"p":14.3,"c":"stöðugur"},{"n":"Sæmundarskóli","v":[42,42,34,29,50,59],"f":42,"l":59,"a":42.7,"p":40.5,"c":"vaxandi"},{"n":"Síðuskóli","v":[50,45,44,35,30,35],"f":50,"l":35,"a":39.8,"p":-30.0,"c":"minnkandi"},{"n":"Súðavíkurskóli","v":[0,0,5,2,2,3],"f":0,"l":3,"a":2.0,"p":null,"c":"óljós"},{"n":"Tjarnarskóli","v":[14,18,19,20,20,18],"f":14,"l":18,"a":18.2,"p":28.6,"c":"vaxandi"},{"n":"Tálknafjarðarskóli","v":[2,3,0,6,6,6],"f":2,"l":6,"a":3.8,"p":200.0,"c":"vaxandi"},{"n":"Vallaskóli","v":[47,44,45,63,75,57],"f":47,"l":57,"a":55.2,"p":21.3,"c":"vaxandi"},{"n":"Valsárskóli","v":[3,6,3,6,5,2],"f":3,"l":2,"a":4.2,"p":-33.3,"c":"minnkandi"},{"n":"Varmahlíðarskóli","v":[20,16,15,15,12,15],"f":20,"l":15,"a":15.5,"p":-25.0,"c":"minnkandi"},{"n":"Varmárskóli","v":[67,76,89,96,69,93],"f":67,"l":93,"a":81.7,"p":38.8,"c":"vaxandi"},{"n":"Vatnsendaskóli","v":[48,40,34,45,61,53],"f":48,"l":53,"a":46.8,"p":10.4,"c":"stöðugur"},{"n":"Vogaskóli","v":[34,24,29,22,32,25],"f":34,"l":25,"a":27.7,"p":-26.5,"c":"minnkandi"},{"n":"Vopnafjarðarskóli","v":[10,8,10,7,12,9],"f":10,"l":9,"a":9.3,"p":-10.0,"c":"stöðugur"},{"n":"Vættaskóli","v":[58,51,47,44,52,null],"f":58,"l":52,"a":50.4,"p":-10.3,"c":"stöðugur"},{"n":"Víkurskóli (Reykjavík)","v":[null,null,null,null,null,68],"f":68,"l":68,"a":68.0,"p":null,"c":"óljós"},{"n":"Víkurskóli (Vík í Mýrdal)","v":[3,6,9,5,4,6],"f":3,"l":6,"a":5.5,"p":100.0,"c":"vaxandi"},{"n":"Víðistaðaskóli","v":[70,68,77,67,60,65],"f":70,"l":65,"a":67.8,"p":-7.1,"c":"stöðugur"},{"n":"Waldorfskólinn Lækjarbotnum","v":[5,7,5,6,6,6],"f":5,"l":6,"a":5.8,"p":20.0,"c":"vaxandi"},{"n":"Waldorfskólinn Sólstafir","v":[10,8,5,0,3,13],"f":10,"l":13,"a":6.5,"p":30.0,"c":"vaxandi"},{"n":"Álfhólsskóli","v":[61,72,73,68,73,68],"f":61,"l":68,"a":69.2,"p":11.5,"c":"stöðugur"},{"n":"Álftamýrarskóli","v":[null,null,null,null,null,30],"f":30,"l":30,"a":30.0,"p":null,"c":"óljós"},{"n":"Álftanesskóli","v":[47,45,31,29,37,47],"f":47,"l":47,"a":39.3,"p":0.0,"c":"stöðugur"},{"n":"Árbæjarskóli","v":[102,95,112,98,99,105],"f":102,"l":105,"a":101.8,"p":2.9,"c":"stöðugur"},{"n":"Árskóli","v":[44,26,43,29,36,48],"f":44,"l":48,"a":37.7,"p":9.1,"c":"stöðugur"},{"n":"Áslandsskóli","v":[55,46,45,50,57,50],"f":55,"l":50,"a":50.5,"p":-9.1,"c":"stöðugur"},{"n":"Ölduselsskóli","v":[60,40,57,50,49,51],"f":60,"l":51,"a":51.2,"p":-15.0,"c":"stöðugur"},{"n":"Öldutúnsskóli","v":[52,54,40,57,45,52],"f":52,"l":52,"a":50.0,"p":0.0,"c":"stöðugur"},{"n":"Öxarfjarðarskóli","v":[5,3,3,0,4,5],"f":5,"l":5,"a":3.3,"p":0.0,"c":"stöðugur"},{"n":"Þelamerkurskóli","v":[11,9,10,11,7,8],"f":11,"l":8,"a":9.3,"p":-27.3,"c":"minnkandi"},{"n":"Þingeyjarskóli","v":[7,6,2,9,6,5],"f":7,"l":5,"a":5.8,"p":-28.6,"c":"minnkandi"},{"n":"Þjórsárskóli","v":[0,0,0,null,null,null],"f":0,"l":0,"a":0.0,"p":null,"c":"óljós"}]};
 
@@ -281,7 +345,6 @@ function makeSpark(vals, cat) {
 function sortBy(key) {
   if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
   document.querySelectorAll('thead th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
-  const th = document.getElementById('th-'+key.replace(/\d/,'v-'+key.slice(1)));
   const thEl = document.getElementById('th-'+key) || document.querySelector(`[onclick="sortBy('${key}')"]`);
   if (thEl) thEl.classList.add(sortDir===1 ? 'sort-asc' : 'sort-desc');
   renderTable();
@@ -306,6 +369,13 @@ function renderTable() {
     if (sortKey === 'c') { av = a.c; bv = b.c; return sortDir * av.localeCompare(bv,'is'); }
     if (sortKey === 'a') { av = a.a ?? -1; bv = b.a ?? -1; }
     else if (sortKey === 'p') { av = a.p ?? -999; bv = b.p ?? -999; }
+    else if (sortKey === 'fh') { av = FRAMH_DATA[a.n] ?? -1; bv = FRAMH_DATA[b.n] ?? -1; }
+    else if (sortKey === 'fhp') {
+      const fa = FRAMH_DATA[a.n], a20 = a.v[5];
+      const fb = FRAMH_DATA[b.n], b20 = b.v[5];
+      av = (fa != null && a20) ? fa/a20 : -1;
+      bv = (fb != null && b20) ? fb/b20 : -1;
+    }
     else if (sortKey.startsWith('v')) { const i=parseInt(sortKey.slice(1)); av = a.v[i]??-1; bv = b.v[i]??-1; }
     else { av=0; bv=0; }
     return sortDir * (av - bv);
@@ -322,6 +392,19 @@ function renderTable() {
     const nums = s.v.map((v,i) => v!==null ? `<td class="num">${v}</td>` : `<td class="num-null">—</td>`).join('');
     const pct = s.p !== null ? (s.p > 0 ? `<td class="pct-pos">+${s.p.toFixed(1)}%</td>` : s.p < 0 ? `<td class="pct-neg">${s.p.toFixed(1)}%</td>` : `<td class="pct-neu">0%</td>`) : `<td class="num-null">—</td>`;
     const badge = `<span class="badge badge-${s.c==='óljós'?'oljost':s.c==='stöðugur'?'stodugur':s.c}">${catLabel[s.c]}</span>`;
+    const fhCount = FRAMH_DATA[s.n];
+    const fhTd = fhCount != null
+      ? `<td class="fh-val fh-col">${fhCount}</td>`
+      : `<td class="num-null fh-col">—</td>`;
+    const base2020 = s.v[5];
+    let fhpTd;
+    if (fhCount != null && base2020) {
+      const ratio = fhCount / base2020 * 100;
+      const cls = ratio >= 80 ? 'fhp-high' : ratio >= 50 ? 'fhp-mid' : 'fhp-low';
+      fhpTd = `<td class="${cls} fh-col">${ratio.toFixed(0)}%</td>`;
+    } else {
+      fhpTd = `<td class="num-null fh-col">—</td>`;
+    }
     return `<tr>
       <td>${s.n}</td>
       <td>${badge}</td>
@@ -329,15 +412,20 @@ function renderTable() {
       <td class="sparkline-cell">${makeSpark(s.v, s.c)}</td>
       <td class="avg-val">${s.a.toFixed(1)}</td>
       ${pct}
+      ${fhTd}
+      ${fhpTd}
     </tr>`;
   }).join('');
 }
 
 // ── CSV download ──────────────────────────────────────────────────
 function downloadCSV() {
-  const rows = [['Skóli','Flokkur','2015','2016','2017','2018','2019','2020','Meðaltal','% breyting']];
+  const rows = [['Skóli','Flokkur','2015','2016','2017','2018','2019','2020','Meðaltal','% breyting','Framh. útsk. 2023-24','% af 2020 árg.']];
   DATA.schools.forEach(s => {
-    rows.push([s.n, s.c, ...s.v.map(v=>v!==null?v:''), s.a, s.p!==null?s.p:'']);
+    const fh = FRAMH_DATA[s.n] ?? '';
+    const base = s.v[5];
+    const fhp = (fh !== '' && base) ? (fh/base*100).toFixed(0)+'%' : '';
+    rows.push([s.n, s.c, ...s.v.map(v=>v!==null?v:''), s.a, s.p!==null?s.p:'', fh, fhp]);
   });
   const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const a = document.createElement('a');
