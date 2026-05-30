@@ -1,0 +1,265 @@
+
+<style>
+.tl-wrap { padding: 1.5rem 0 2rem; font-family: var(--font-sans); }
+.tl-header h2 { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 2px; }
+.tl-header p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 1rem; }
+.chart-wrap { position: relative; width: 100%; height: 220px; margin-bottom: 0.5rem; }
+.legend-row { display: flex; align-items: center; gap: 16px; margin-bottom: 1rem; font-size: 12px; color: var(--color-text-secondary); }
+.legend-row span { display: flex; align-items: center; gap: 5px; }
+.leg-box { width: 12px; height: 12px; border-radius: 2px; }
+.step-cards { display: flex; flex-direction: column; gap: 8px; min-height: 140px; }
+.step-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: var(--color-text-primary); line-height: 1.5; opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.step-card.visible { opacity: 1; transform: none; }
+.step-card.year-label { font-weight: 500; font-size: 14px; background: var(--color-background-secondary); }
+.step-card.hl { border-left: 3px solid #378ADD; border-radius: 0 8px 8px 0; }
+.step-card.warn { border-left: 3px solid #E24B4A; border-radius: 0 8px 8px 0; }
+.step-card.ok { border-left: 3px solid #1D9E75; border-radius: 0 8px 8px 0; }
+.nav-row { display: flex; align-items: center; gap: 12px; margin-top: 1.25rem; }
+.nav-btn { display: flex; align-items: center; gap: 6px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 16px; font-size: 14px; color: var(--color-text-primary); cursor: pointer; }
+.nav-btn:hover { background: var(--color-background-secondary); }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.ctr { font-size: 13px; color: var(--color-text-secondary); margin-left: auto; }
+</style>
+
+<div class="tl-wrap">
+  <div class="tl-header">
+    <h2>Lesskilningur Íslendinga í PISA-könnunum</h2>
+    <p>Stig í lestri · 2012–2022</p>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="c"></canvas>
+  </div>
+  <div class="legend-row">
+    <span><span class="leg-box" style="background:rgba(124,99,230,0.18); border: 1px solid rgba(124,99,230,0.4);"></span>Ráðherratíð Illuga Gunnarssonar (2013–2017)</span>
+  </div>
+  <div class="step-cards" id="cards"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prev" onclick="go(-1)" disabled>
+      <i class="ti ti-arrow-left" aria-hidden="true"></i> Til baka
+    </button>
+    <button class="nav-btn" id="next" onclick="go(1)">
+      Áfram <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+    <span class="ctr" id="ctr">1 / 8</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var steps = [
+  { year: 2012, cards: [
+    { t: 'year-label', s: '📅 2012 — PISA-könnun' },
+    { t: 'hl', s: 'Lestur mælist í 483 stigum. Hafði lækkað úr 507 stigum frá aldamótum — en óvænt hækkað í einni könnun (2009). Annars jafnt og þétt niður á við.' }
+  ]},
+  { year: 2013, cards: [
+    { t: 'year-label', s: '📅 2013' },
+    { t: 'step-card', s: 'Illugi Gunnarsson (D) verður menntamálaráðherra.' }
+  ]},
+  { year: 2014, cards: [
+    { t: 'year-label', s: '📅 2014' },
+    { t: 'step-card', s: 'Illugi leggur fram hvítbók, m.a. um læsi.' },
+    { t: 'step-card', s: 'Viðskiptaráð og ráðherra taka höndum saman um áherslur á læsi.' },
+    { t: 'step-card', s: 'Nemandi fæddur 2008 hefur grunnskólagöngu.' }
+  ]},
+  { year: 2015, cards: [
+    { t: 'year-label', s: '📅 2015 — PISA-könnun' },
+    { t: 'warn', s: 'Ísland mælist með 482 stig. Hnignun hefur ekki verið hægari frá aldamótum (að undanskilinni hækkun 2009).' },
+    { t: 'ok', s: 'Innleiðing hafin á Þjóðarsáttmála um læsi.' },
+    { t: 'step-card', s: 'Nemandi fæddur 2009 hefur grunnskólagöngu.' }
+  ]},
+  { year: 2017, cards: [
+    { t: 'year-label', s: '📅 2017' },
+    { t: 'step-card', s: 'Illugi Gunnarsson lætur af störfum sem menntamálaráðherra.' },
+    { t: 'step-card', s: 'Sveitarfélög setja læsisstefnur í samræmi við sáttmálann við ráðuneytið.' },
+    { t: 'step-card', s: 'Illugi lofar að árangur muni sjást strax á PISA-prófum 2018.' }
+  ]},
+  { year: 2018, cards: [
+    { t: 'year-label', s: '📅 2018 — PISA-könnun' },
+    { t: 'warn', s: 'Ísland mælist með 474 stig. Hnignun lesskilnings töluverð á milli prófa.' },
+    { t: 'step-card', s: 'Í viðtali segir Illugi að góðir hlutir gerist hægt — og að næsta mæling muni sýna verulegan árangur.' }
+  ]},
+  { year: 2021, cards: [
+    { t: 'year-label', s: '📅 2021' },
+    { t: 'step-card', s: 'PISA-prófum aflýst vegna heimsfaraldurs COVID-19.' }
+  ]},
+  { year: 2022, cards: [
+    { t: 'year-label', s: '📅 2022 — PISA-könnun' },
+    { t: 'step-card', s: 'PISA-prófum fram haldið.' },
+    { t: 'warn', s: 'Ísland fellur hratt — mælist í 436 stigum. Aldrei mælst neðar.' }
+  ]}
+];
+
+var pisaMap = { 2012:483, 2015:482, 2018:474, 2022:436 };
+var allYears = [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
+var pisaYears = [2012,2015,2018,2022];
+var cur = 0;
+
+var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+var axisC = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+var gridC = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
+var illugiColor = isDark ? 'rgba(160,140,255,0.15)' : 'rgba(124,99,230,0.1)';
+var illugiStroke = isDark ? 'rgba(160,140,255,0.5)' : 'rgba(124,99,230,0.45)';
+
+var illugiPlugin = {
+  id: 'illugiShade',
+  beforeDraw: function(chart) {
+    var ctx = chart.ctx;
+    var xScale = chart.scales.x;
+    var yScale = chart.scales.y;
+    var maxYear = steps[cur].year;
+    if (maxYear < 2013) return;
+
+    var startYear = 2013;
+    var endYear = Math.min(2017, maxYear);
+
+    var startIdx = allYears.indexOf(startYear);
+    var endIdx = allYears.indexOf(endYear);
+    if (startIdx < 0 || endIdx < 0) return;
+
+    var x1 = xScale.getPixelForValue(startIdx);
+    var x2 = xScale.getPixelForValue(endIdx);
+    var top = yScale.top;
+    var bottom = yScale.bottom;
+
+    ctx.save();
+    ctx.fillStyle = illugiColor;
+    ctx.fillRect(x1, top, x2 - x1, bottom - top);
+
+    ctx.strokeStyle = illugiStroke;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, top);
+    ctx.lineTo(x1, bottom);
+    ctx.stroke();
+
+    if (maxYear >= 2017) {
+      ctx.beginPath();
+      ctx.moveTo(x2, top);
+      ctx.lineTo(x2, bottom);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+};
+
+function getLineData(stepIdx) {
+  var maxYear = steps[stepIdx].year;
+  var visible = pisaYears.filter(function(y){ return y <= maxYear; });
+  return allYears.map(function(y) {
+    if (visible.indexOf(y) >= 0) return pisaMap[y];
+    if (visible.length >= 2) {
+      var prev = visible[visible.length-2];
+      var last = visible[visible.length-1];
+      if (y > prev && y < last) return null;
+    }
+    return null;
+  });
+}
+
+function getPointData(stepIdx) {
+  var maxYear = steps[stepIdx].year;
+  var visible = pisaYears.filter(function(y){ return y <= maxYear; });
+  return allYears.map(function(y) {
+    return visible.indexOf(y) >= 0 ? pisaMap[y] : null;
+  });
+}
+
+function ptColors(stepIdx) {
+  var map = { 2012:'#378ADD', 2015:'#EF9F27', 2018:'#EF9F27', 2022:'#E24B4A' };
+  var maxYear = steps[stepIdx].year;
+  var visible = pisaYears.filter(function(y){ return y <= maxYear; });
+  return allYears.map(function(y){
+    return visible.indexOf(y)>=0 ? (map[y]||'#888') : 'transparent';
+  });
+}
+
+function ptRadius(stepIdx) {
+  var maxYear = steps[stepIdx].year;
+  var visible = pisaYears.filter(function(y){ return y <= maxYear; });
+  return allYears.map(function(y){ return visible.indexOf(y)>=0 ? 7 : 0; });
+}
+
+var chart = new Chart(document.getElementById('c'), {
+  type: 'line',
+  plugins: [illugiPlugin],
+  data: {
+    labels: allYears,
+    datasets: [
+      {
+        data: getLineData(0),
+        borderColor: '#378ADD',
+        borderWidth: 2,
+        pointRadius: 0,
+        spanGaps: true,
+        tension: 0,
+        fill: false
+      },
+      {
+        data: getPointData(0),
+        borderColor: '#fff',
+        borderWidth: 2,
+        pointBackgroundColor: ptColors(0),
+        pointRadius: ptRadius(0),
+        pointHoverRadius: ptRadius(0),
+        showLine: false,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 400 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        filter: function(i){ return i.raw !== null && i.datasetIndex === 1; },
+        callbacks: { label: function(c){ return c.raw + ' stig'; } }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: axisC, font: { size: 12 }, autoSkip: false, maxRotation: 0 },
+        grid: { color: gridC }
+      },
+      y: {
+        min: 420, max: 500,
+        ticks: { color: axisC, font: { size: 12 }, stepSize: 10 },
+        grid: { color: gridC },
+        title: { display: true, text: 'Stig í lestri (PISA)', color: axisC, font: { size: 12 } }
+      }
+    }
+  }
+});
+
+function renderCards(idx) {
+  var el = document.getElementById('cards');
+  el.innerHTML = '';
+  steps[idx].cards.forEach(function(card, i) {
+    var d = document.createElement('div');
+    d.className = 'step-card ' + card.t;
+    d.textContent = card.s;
+    el.appendChild(d);
+    setTimeout(function(){ d.classList.add('visible'); }, 60 + i*80);
+  });
+}
+
+function go(dir) {
+  cur = Math.max(0, Math.min(steps.length-1, cur+dir));
+  chart.data.datasets[0].data = getLineData(cur);
+  chart.data.datasets[1].data = getPointData(cur);
+  chart.data.datasets[1].pointBackgroundColor = ptColors(cur);
+  chart.data.datasets[1].pointRadius = ptRadius(cur);
+  chart.data.datasets[1].pointHoverRadius = ptRadius(cur);
+  chart.update();
+  renderCards(cur);
+  document.getElementById('prev').disabled = cur===0;
+  document.getElementById('next').disabled = cur===steps.length-1;
+  document.getElementById('ctr').textContent = (cur+1) + ' / ' + steps.length;
+}
+
+renderCards(0);
+</script>
